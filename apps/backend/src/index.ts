@@ -42,6 +42,11 @@ app.use('/uploads', express.static(uploadsDir));
 // Healthcheck (no auth)
 app.get('/health', (_req, res) => { res.json({ ok: true }); });
 
+// Debug: echo request headers (non-production only)
+if (process.env.NODE_ENV !== 'production') {
+  app.get('/debug/headers', (req, res) => { res.json(req.headers as any); });
+}
+
 // Swagger UI
 app.get('/docs.json', (_req, res) => { res.json(openapiSpec as any); });
 app.use(
@@ -52,6 +57,27 @@ app.use(
     swaggerOptions: {
       url: '/docs.json',
       persistAuthorization: true,
+      // Ensure Authorization header is attached on Try it out requests when authorized in Swagger UI
+      requestInterceptor: function (req: any) {
+        try {
+          const w: any = (globalThis as any).window || (function(){ return undefined; })();
+          const ui = w && w.ui;
+          let token: string | undefined;
+          if (ui?.authSelectors?.authorized) {
+            const auth = ui.authSelectors.authorized();
+            // Try both JS and Immutable accessors used by Swagger UI
+            const js = auth?.toJS ? auth.toJS() : auth;
+            token = js?.bearerAuth?.value?.token
+                 || auth?.getIn?.(['bearerAuth', 'value', 'token']);
+          }
+          if (token && !req.headers['Authorization'] && !req.headers['authorization']) {
+            req.headers['Authorization'] = 'Bearer ' + token;
+          }
+        } catch (_) {
+          // ignore
+        }
+        return req;
+      }
     },
     customSiteTitle: 'PMS API Docs',
   } as any)
