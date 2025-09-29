@@ -1,0 +1,30 @@
+{
+  "name": "pms-mvp-monorepo",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check-types": "turbo run check-types",
+    "db:test": "yarn workspace pms-mvp-backend run db:test",
+    "db:initial": "yarn workspace pms-mvp-backend run db:initial",
+    "db:schema": "yarn workspace pms-mvp-backend run db:schema",
+    "db:seed": "yarn workspace pms-mvp-backend run db:seed",
+    "db:verify": "yarn workspace pms-mvp-backend run db:verify",
+    "db:init": "yarn workspace pms-mvp-backend run db:init"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3",
+    "turbo": "^2.4.4",
+    "typescript": "5.8.2"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "yarn@1.22.19",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
