@@ -18,6 +18,8 @@ export interface AuthStore {
   error: any;
   loading: Loading;
   isAuthenticated: boolean;
+  effectiveRole?: 'ADMIN' | 'OWNER' | 'MEMBER' | null;
+  permissions?: string[];
 }
 
 export interface UserStore {

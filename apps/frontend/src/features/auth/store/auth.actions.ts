@@ -3,7 +3,7 @@ import axios, { AxiosError } from 'axios';
 import { axiosErrorHandler, ServerError } from '@/shared/store/helpers';
 import { RootState } from '@/shared/store';
 import api from '@/shared/api/axiosInstance';
-import { logout, setUser } from '@/features/auth/store/auth.slice';
+import { logout, setUser, setPermissions } from '@/features/auth/store/auth.slice';
 
 const requestErrorCatcher = (err: any, handler: { dispatch: any; rejectWithValue: any }) => {
   axiosErrorHandler(err, handler.dispatch);
@@ -109,7 +109,8 @@ export const fetchCurrentUser = createAsyncThunk<any, void, { state: RootState }
       }
       const { data } = await api.get('/auth/me');
       if (data?.user) {
-        dispatch(setUser({ user: data.user }));
+        // Ensure token is set in state even if persist rehydration hasn't completed yet
+        dispatch(setUser({ user: data.user, token }));
         return data.user;
       } else {
         dispatch(logout());
@@ -117,6 +118,26 @@ export const fetchCurrentUser = createAsyncThunk<any, void, { state: RootState }
       }
     } catch (err) {
       dispatch(logout());
+      return null;
+    }
+  }
+);
+
+export const fetchPermissions = createAsyncThunk<any, void, { state: RootState }>(
+  'auth/fetchPermissions',
+  async (_, { dispatch, getState }) => {
+    try {
+      const state = getState();
+      const hasToken = !!state.auth.token || (typeof window !== 'undefined' && !!localStorage.getItem('authToken'));
+      if (!hasToken) return null;
+      const { data } = await api.get('/auth/permissions');
+      if (data) {
+        dispatch(setPermissions({ effectiveRole: data.role as any, permissions: data.permissions || [] }));
+      }
+      return data;
+    } catch (err) {
+      // Non-fatal; clear permissions on error
+      dispatch(setPermissions({ effectiveRole: null, permissions: [] }));
       return null;
     }
   }

@@ -10,6 +10,8 @@ export const initialState: AuthStore = {
   error: undefined,
   loading: Loading.idle,
   isAuthenticated: false,
+  effectiveRole: null,
+  permissions: [],
 };
 
 const errorHandler = (state: AuthStore, payload: string) => {
@@ -71,10 +73,16 @@ const authSlice = createSlice({
         } catch {}
       }
     },
+    setPermissions(state, action: PayloadAction<{ effectiveRole: 'ADMIN'|'OWNER'|'MEMBER' | null; permissions: string[] }>) {
+      state.effectiveRole = action.payload.effectiveRole;
+      state.permissions = action.payload.permissions || [];
+    },
     logout(state) {
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
+      state.effectiveRole = null;
+      state.permissions = [];
       if (typeof window !== 'undefined') {
         try { localStorage.removeItem('authToken'); } catch {}
       }
@@ -88,5 +96,5 @@ const persistConfig = {
   storage,
 };
 
-export const { logout, setUser } = authSlice.actions;
+export const { logout, setUser, setPermissions } = authSlice.actions;
 export default persistReducer(persistConfig, authSlice.reducer);

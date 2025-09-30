@@ -26,7 +26,7 @@ export default function RootLayout({
               <ReactQueryProvider>
                 <SnackbarNotification />
                 <Header />
-                <Container maxWidth="md">
+                <Container maxWidth="md" disableGutters sx={{ px: '10px' }}>
                   <Suspense fallback={<div>Loading...</div>}>
                     <Box sx={{ marginTop: 4 }}>{children}</Box>
                   </Suspense>

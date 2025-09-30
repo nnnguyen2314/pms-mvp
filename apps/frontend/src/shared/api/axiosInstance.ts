@@ -1,7 +1,11 @@
 import axios from 'axios';
 
+// Normalize base URL and ensure it targets the backend /api mountpoint
+const rawBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/+$/, '');
+const baseURL = rawBase.endsWith('/api') ? rawBase : `${rawBase}/api`;
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL,
 });
 
 api.interceptors.request.use((config) => {

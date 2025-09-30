@@ -112,3 +112,42 @@ ON CONFLICT (id) DO UPDATE SET action = EXCLUDED.action, meta = EXCLUDED.meta;
 INSERT INTO pms.notifications (id, user_id, type, title, body, entity_type, entity_id, meta, is_read, created_at)
 VALUES ('cccccccc-dddd-eeee-ffff-000000000000', '11111111-1111-1111-1111-111111111111', 'welcome', 'Welcome', 'Your workspace is ready!', 'workspace', '11111111-2222-3333-4444-555555555555', '{}'::jsonb, false, now())
 ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, body = EXCLUDED.body, is_read = EXCLUDED.is_read;
+
+-- Role permissions
+INSERT INTO pms.role_permissions (role, permission) VALUES
+  -- Admin: all
+  ('ADMIN','workspace:create'),
+  ('ADMIN','workspace:update'),
+  ('ADMIN','workspace:delete'),
+  ('ADMIN','project:create'),
+  ('ADMIN','project:update'),
+  ('ADMIN','project:delete'),
+  ('ADMIN','project:archive'),
+  ('ADMIN','member:add:workspace'),
+  ('ADMIN','member:remove:workspace'),
+  ('ADMIN','member:add:project'),
+  ('ADMIN','member:remove:project'),
+  ('ADMIN','task:create'),
+  ('ADMIN','task:update'),
+  ('ADMIN','task:delete'),
+  ('ADMIN','task:archive'),
+  ('ADMIN','task:assign:self'),
+  ('ADMIN','task:assign:other'),
+  ('ADMIN','comment:create'),
+  -- Owner (project owner)
+  ('OWNER','member:add:project'),
+  ('OWNER','member:remove:project'),
+  ('OWNER','task:create'),
+  ('OWNER','task:update'),
+  ('OWNER','task:delete'),
+  ('OWNER','task:archive'),
+  ('OWNER','task:assign:self'),
+  ('OWNER','task:assign:other'),
+  ('OWNER','comment:create'),
+  -- Member
+  ('MEMBER','task:assign:self'),
+  ('MEMBER','task:create'),
+  ('MEMBER','task:update'),
+  ('MEMBER','task:delete:own'),
+  ('MEMBER','comment:create')
+ON CONFLICT DO NOTHING;

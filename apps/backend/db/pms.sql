@@ -230,3 +230,10 @@ CREATE TABLE IF NOT EXISTS project_members (
   PRIMARY KEY (project_id, user_id)
 );
 CREATE INDEX IF NOT EXISTS idx_project_members_user ON project_members(user_id);
+
+-- Role-based permissions table (global by role)
+CREATE TABLE IF NOT EXISTS pms.role_permissions (
+  role text NOT NULL,
+  permission text NOT NULL,
+  PRIMARY KEY (role, permission)
+);
