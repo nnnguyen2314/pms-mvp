@@ -114,6 +114,13 @@ VALUES ('cccccccc-dddd-eeee-ffff-000000000000', '11111111-1111-1111-1111-1111111
 ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, body = EXCLUDED.body, is_read = EXCLUDED.is_read;
 
 -- Role permissions
+-- Ensure table exists locally for IDE/resolution when running this seed standalone
+CREATE TABLE IF NOT EXISTS pms.role_permissions (
+  role text NOT NULL,
+  permission text NOT NULL,
+  PRIMARY KEY (role, permission)
+);
+
 INSERT INTO pms.role_permissions (role, permission) VALUES
   -- Admin: all
   ('ADMIN','workspace:create'),

@@ -20,20 +20,34 @@ function mapRow(r: any): Workspace {
   };
 }
 
-export async function listWorkspacesForUser(userId: string): Promise<Workspace[]> {
+export type ListOptions = {
+  status?: number | null;
+  sortBy?: 'name' | 'status' | 'created_at' | 'updated_at';
+  sortDir?: 'asc' | 'desc';
+};
+
+export async function listWorkspacesForUser(userId: string, opts: ListOptions = {}): Promise<Workspace[]> {
+  const orderCol = ['name', 'status', 'created_at', 'updated_at'].includes(String(opts.sortBy)) ? opts.sortBy : 'created_at';
+  const dir = String(opts.sortDir).toLowerCase() === 'asc' ? 'asc' : 'desc';
+  const params: any[] = [userId];
+  let where = 'm.user_id = $1';
+  if (opts.status !== undefined) {
+    params.push(opts.status === null ? null : String(opts.status));
+    where += ` and w.status ${opts.status === null ? 'is' : '='} $${params.length}`;
+  }
   const { rows } = await pgPool.query(
     `select w.*
-       from workspaces w
-       join workspace_members m on m.workspace_id = w.id
-      where m.user_id = $1
-      order by w.created_at desc`,
-    [userId]
+       from pms.workspaces w
+       join pms.workspace_members m on m.workspace_id = w.id
+      where ${where}
+      order by w.${orderCol} ${dir}`,
+    params
   );
   return rows.map(mapRow);
 }
 
 export async function getWorkspaceById(id: string): Promise<Workspace | null> {
-  const { rows } = await pgPool.query(`select * from workspaces where id = $1`, [id]);
+  const { rows } = await pgPool.query(`select * from pms.workspaces where id = $1`, [id]);
   return rows[0] ? mapRow(rows[0]) : null;
 }
 
@@ -42,7 +56,7 @@ export async function createWorkspace(userId: string, data: { name: string; desc
   try {
     await client.query('begin');
     const { rows } = await client.query(
-      `insert into workspaces (name, description, status, created_by)
+      `insert into pms.workspaces (name, description, status, created_by)
        values ($1, $2, $3, $4)
        returning *`,
       [data.name, data.description ?? null, data.status === undefined || data.status === null ? null : String(data.status), userId]
@@ -50,7 +64,7 @@ export async function createWorkspace(userId: string, data: { name: string; desc
     const ws = mapRow(rows[0]);
     // Add creator as OWNER member
     await client.query(
-      `insert into workspace_members (workspace_id, user_id, role) values ($1, $2, 'OWNER') on conflict do nothing`,
+      `insert into pms.workspace_members (workspace_id, user_id, role) values ($1, $2, 'OWNER') on conflict do nothing`,
       [ws.id, userId]
     );
     await client.query('commit');
@@ -82,21 +96,26 @@ export async function updateWorkspace(id: string, data: { name?: string; descrip
   if (fields.length === 0) return getWorkspaceById(id);
   values.push(id);
   const { rows } = await pgPool.query(
-    `update workspaces set ${fields.join(', ')}, updated_at = now() where id = $${i} returning *`,
+    `update pms.workspaces set ${fields.join(', ')}, updated_at = now() where id = $${i} returning *`,
     values
   );
   return rows[0] ? mapRow(rows[0]) : null;
 }
 
+export async function deleteWorkspace(id: string): Promise<boolean> {
+  const { rowCount } = await pgPool.query(`delete from pms.workspaces where id = $1`, [id]);
+  return (rowCount ?? 0) > 0;
+}
+
 export async function listByIds(ids: string[]): Promise<Workspace[]> {
   if (!ids?.length) return [];
-  const { rows } = await pgPool.query(`select * from workspaces where id = any($1)`, [ids]);
+  const { rows } = await pgPool.query(`select * from pms.workspaces where id = any($1)`, [ids]);
   return rows.map(mapRow);
 }
 
 export async function getMemberRole(workspaceId: string, userId: string): Promise<'OWNER'|'ADMIN'|'MEMBER'|'GUEST'|null> {
   const { rows } = await pgPool.query(
-    `select role from workspace_members where workspace_id = $1 and user_id = $2`,
+    `select role from pms.workspace_members where workspace_id = $1 and user_id = $2`,
     [workspaceId, userId]
   );
   return rows[0]?.role ?? null;
@@ -104,12 +123,12 @@ export async function getMemberRole(workspaceId: string, userId: string): Promis
 
 export async function addMember(workspaceId: string, userId: string, role: 'ADMIN'|'MEMBER'|'GUEST' = 'MEMBER'): Promise<void> {
   await pgPool.query(
-    `insert into workspace_members (workspace_id, user_id, role) values ($1,$2,$3)
+    `insert into pms.workspace_members (workspace_id, user_id, role) values ($1,$2,$3)
      on conflict (workspace_id, user_id) do update set role = excluded.role`,
     [workspaceId, userId, role]
   );
 }
 
 export async function removeMember(workspaceId: string, userId: string): Promise<void> {
-  await pgPool.query(`delete from workspace_members where workspace_id = $1 and user_id = $2`, [workspaceId, userId]);
+  await pgPool.query(`delete from pms.workspace_members where workspace_id = $1 and user_id = $2`, [workspaceId, userId]);
 }

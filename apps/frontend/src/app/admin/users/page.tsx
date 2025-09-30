@@ -2,12 +2,12 @@
 
 import React from 'react';
 import ProtectedRoute from '@/shared/components/ProtectedRoute';
-import WorkspacesManager from '@/features/workspaces/components/WorkspacesManager';
+import UsersAdminContainer from '@/features/admin/users/containers/UsersAdminContainer';
 
-export default function WorkspacesPage() {
+export default function AdminUsersPage() {
   return (
     <ProtectedRoute>
-      <WorkspacesManager />
+      <UsersAdminContainer />
     </ProtectedRoute>
   );
 }
