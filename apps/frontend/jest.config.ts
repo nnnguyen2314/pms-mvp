@@ -10,6 +10,19 @@ const config: Config = {
     '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.json' }],
   },
   testPathIgnorePatterns: ['/node_modules/', '/.next/', '/e2e/'],
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/__tests__/**',
+    '!src/**/types{,/**}',
+  ],
+  coverageThreshold: {
+    global: {
+      lines: 60,
+      statements: 60,
+      branches: 45,
+      functions: 55,
+    },
+  },
 };
 
 export default config;
